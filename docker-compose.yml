@@ -218,7 +218,18 @@ services:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
     networks:
       - cafe-network
-
+  # ==========================================
+  # FRONTEND: UI REACTJS / VITE
+  # ==========================================
+  cafe-ui:
+    build: ./Frontend # <-- Sửa lại đường dẫn này cho đúng với thư mục chứa Dockerfile UI của bạn
+    container_name: cafe-web-ui
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api-gateway # UI sẽ đợi cổng API Gateway bật lên trước
+    networks:
+      - cafe-network
 networks:
   cafe-network:
     driver: bridge

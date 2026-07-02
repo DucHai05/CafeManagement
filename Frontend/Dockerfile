@@ -9,7 +9,7 @@ RUN npm install
 COPY . .
 
 # 2. TẠM THỜI XÓA dòng này nếu bạn chỉ muốn chạy dev mode
-# RUN npm run build 
+RUN npm run build 
 
 EXPOSE 5173
 

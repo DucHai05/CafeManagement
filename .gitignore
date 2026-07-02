@@ -8,22 +8,22 @@ Thumbs.db
 .DS_Store
 
 # --- Backend (SpringBoots) ---
-SpringBoots/.gradle/
-SpringBoots/build/
-SpringBoots/out/
-SpringBoots/target/
-SpringBoots/.mvn/
-SpringBoots/*.jar
-SpringBoots/bin/
+Backend/.gradle/
+Backend/build/
+Backend/out/
+Backend/target/
+Backend/.mvn/
+Backend/*.jar
+Backend/bin/
 
 # --- Frontend (ReactJS) ---
-ReactJS/node_modules/
-ReactJS/build/
-ReactJS/dist/
-ReactJS/.env.local
-ReactJS/.env.development.local
-ReactJS/.env.test.local
-ReactJS/.env.production.local
+Frontend/node_modules/
+Frontend/build/
+Frontend/dist/
+Frontend/.env.local
+Frontend/.env.development.local
+Frontend/.env.test.local
+Frontend/.env.production.local
 
 # --- Logs ---
 *.log

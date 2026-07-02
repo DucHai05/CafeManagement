@@ -33,6 +33,10 @@ public class DoanhThuService {
 
     @Transactional
     public DoanhThu updateRevenueAfterPayment(String maCa, Double amount, String method) {
+        if (amount == null || amount < 0) {
+            throw new RuntimeException("So tien thanh toan khong hop le");
+        }
+
         DoanhThu doanhThu = doanhThuRepository.findByMaCa(maCa)
                 .orElseGet(() -> {
                     DoanhThu newDt = new DoanhThu();
@@ -45,7 +49,11 @@ public class DoanhThuService {
                     return newDt;
                 });
 
-        if ("CASH".equalsIgnoreCase(method) || "Tiền mặt".equalsIgnoreCase(method)) {
+        String normalizedMethod = method == null ? "" : method.trim().toUpperCase();
+
+        if ("CASH".equals(normalizedMethod)
+                || "TIEN_MAT".equals(normalizedMethod)
+                || "TIEN MAT".equals(normalizedMethod)) {
             Double currentMat = doanhThu.getTienMat() != null ? doanhThu.getTienMat() : 0.0;
             doanhThu.setTienMat(currentMat + amount);
 
@@ -53,9 +61,13 @@ public class DoanhThuService {
             if (updatedRows == 0) {
                 throw new RuntimeException("Khong tim thay ca voi ma: " + maCa);
             }
-        } else if ("TRANSFER".equalsIgnoreCase(method) || "Chuyển khoản".equalsIgnoreCase(method)) {
+        } else if ("TRANSFER".equals(normalizedMethod)
+                || "CHUYEN_KHOAN".equals(normalizedMethod)
+                || "CHUYEN KHOAN".equals(normalizedMethod)) {
             Double currentCK = doanhThu.getTienCK() != null ? doanhThu.getTienCK() : 0.0;
             doanhThu.setTienCK(currentCK + amount);
+        } else {
+            throw new RuntimeException("Phuong thuc thanh toan khong hop le: " + method);
         }
 
         return doanhThuRepository.save(doanhThu);

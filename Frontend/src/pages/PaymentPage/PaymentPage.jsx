@@ -94,7 +94,6 @@ const PaymentPage = () => {
                 };
 
                 await orderApi.finalPayment(paymentPayload);
-                await doanhthuApi.updateAfterPayment(maCaOpen, method, finalAmount);
                 await tableApi.updateTrangThai(maBan, 'PAID');
 
                 alert(finalMaKM ? "Thanh toán thành công (Đã áp dụng KM)! 🥂" : "Thanh toán thành công giá gốc! 🥂");

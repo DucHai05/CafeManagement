@@ -50,41 +50,43 @@ public class SecurityConfig {
             throw new UsernameNotFoundException("UserDetailsService is disabled. Use AuthService instead.");
         };
     }
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint((request, response, authException) ->
-                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
-                        .accessDeniedHandler((request, response, accessDeniedException) ->
-                                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden"))
-                )
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.DELETE, "/api/user/nhan-vien/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/auth/change-password").authenticated()
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/nhan-vien/me").authenticated()
-                        
-                        // --- THÊM DÒNG NÀY ---
-                        // Cho phép mọi user đã đăng nhập được GET danh sách nhân viên
-                        .requestMatchers(HttpMethod.GET, "/nhan-vien").authenticated() 
-                        
-                        // Giữ nguyên các thao tác POST, PUT, DELETE cho ADMIN
-                        .requestMatchers("/nhan-vien", "/nhan-vien/**").hasRole("ADMIN") 
-                        
-                        .anyRequest().authenticated()
-                );
-        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-        return http.build();
-    }
+@Bean
+public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    http
+            // Tắt hoàn toàn cơ chế CSRF bảo vệ cho tất cả các endpoint
+            .csrf(csrf -> csrf.disable()) 
+            
+            // Kích hoạt cấu hình CORS từ bean corsConfigurationSource() phía dưới
+            .cors(Customizer.withDefaults()) 
+
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .exceptionHandling(exception -> exception
+                    .authenticationEntryPoint((request, response, authException) ->
+                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
+                    .accessDeniedHandler((request, response, accessDeniedException) ->
+                            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden"))
+            )
+            .authorizeHttpRequests(auth -> auth
+                    // Đảm bảo mở tự do hoàn toàn cho tầng auth nhận diện từ Gateway
+                    .requestMatchers("/auth/**").permitAll() 
+                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                    
+                    .requestMatchers(HttpMethod.DELETE, "/api/user/nhan-vien/**").hasRole("ADMIN")
+                    .requestMatchers("/nhan-vien/me").authenticated()
+                    .requestMatchers(HttpMethod.GET, "/nhan-vien").authenticated() 
+                    .requestMatchers("/nhan-vien", "/nhan-vien/**").hasRole("ADMIN") 
+                    
+                    .anyRequest().authenticated()
+            );
+
+    http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+    return http.build();
+}
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://127.0.0.1:5173"));
+        configuration.setAllowedOriginPatterns(List.of("*"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Cache-Control"));
         configuration.setAllowCredentials(true);
