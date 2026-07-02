@@ -40,17 +40,26 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    # Bước 3: Chỉ khởi tạo môi trường Gradle thuần túy tại thư mục gốc
+    # Chỉ khởi tạo môi trường Gradle thuần túy tại thư mục gốc của repo, tuyệt đối không trỏ linh tinh
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
 
-    # Bước 4: Di chuyển vào thư mục con và thực thi lệnh biên dịch chính thức
+    # Tự động quét tìm vị trí chuẩn của file gradlew dựa theo tên service, chấp hết mọi loại trùng lặp đường dẫn
     - name: Compile and Verify ${{ matrix.service }}
-      working-directory: ./${{ matrix.service }}
       run: |
+        TARGET_NAME=$(echo "${{ matrix.service }}" | tr '[:upper:]' '[:lower:]')
+        GRADLEW_PATH=$(find . -iname "gradlew" | grep -i "$TARGET_NAME" | head -n 1)
+        
+        if [ -z "$GRADLEW_PATH" ]; then
+          echo "❌ Không tìm thấy thư mục nào khớp với service: ${{ matrix.service }}"
+          exit 1
+        fi
+        
+        # Nhảy vào đúng thư mục chứa file gradlew tìm được và chạy build
+        cd $(dirname "$GRADLEW_PATH")
         chmod +x ./gradlew
-        ./gradlew build -x test # <-- Đổi từ assemble thành build -x test
-
+        ./gradlew assemble
+        
   # ================= JOB 2: FRONTEND =================
   frontend-ci:
     runs-on: ubuntu-latest
