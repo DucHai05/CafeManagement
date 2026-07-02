@@ -40,19 +40,17 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    # Bước 3: Chỉ dùng để setup môi trường Gradle (Bỏ tham số arguments lỗi đi)
+    # Bước 3: Chỉ khởi tạo môi trường Gradle thuần túy tại thư mục gốc
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
-      with:
-        build-root-directory: ./${{ matrix.service }}
 
-    # Bước 4: Tách riêng lệnh thực thi assemble chạy qua gradlew
+    # Bước 4: Di chuyển vào thư mục con và thực thi lệnh biên dịch chính thức
     - name: Compile and Verify ${{ matrix.service }}
-      working-directory: ./${{ matrix.service }}
+      working-directory: ./${{ matrix.service }} # Ép máy ảo đứng tại thư mục service này để chạy lệnh
       run: |
         chmod +x ./gradlew
         ./gradlew assemble
-        
+
   # ================= JOB 2: FRONTEND =================
   frontend-ci:
     runs-on: ubuntu-latest
