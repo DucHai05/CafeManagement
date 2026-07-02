@@ -46,10 +46,10 @@ jobs:
 
     # Bước 4: Di chuyển vào thư mục con và thực thi lệnh biên dịch chính thức
     - name: Compile and Verify ${{ matrix.service }}
-      working-directory: ./${{ matrix.service }} # Ép máy ảo đứng tại thư mục service này để chạy lệnh
+      working-directory: ./${{ matrix.service }}
       run: |
         chmod +x ./gradlew
-        ./gradlew assemble
+        ./gradlew build -x test # <-- Đổi từ assemble thành build -x test
 
   # ================= JOB 2: FRONTEND =================
   frontend-ci:
