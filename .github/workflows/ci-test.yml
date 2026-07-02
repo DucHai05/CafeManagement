@@ -14,17 +14,17 @@ jobs:
     strategy:
       matrix:
         service: [
-          "cafe-api-gateway",
-          "cafe-eureka-server",
-          "cafe-service-user",
-          "cafe-service-cafe",
-          "cafe-service-product",
-          "cafe-service-store",
-          "cafe-service-table",
-          "cafe-service-salary",
-          "cafe-service-doanh-thu",
-          "cafe-service-promotion",
-          "cafe-service-notification"
+          "ServiceAPIGateway",
+          "ServiceEurekaServer",
+          "ServiceUser",
+          "ServiceCafe",
+          "ServiceProduct",
+          "ServiceStore",
+          "ServiceTable",
+          "ServiceSalary",
+          "ServiceDoanhThu",
+          "ServicePromotion",
+          "ServiceNotification"
         ]
       # Nếu 1 service fail, các service khác vẫn tiếp tục chạy không bị dừng lại
       fail-fast: false
