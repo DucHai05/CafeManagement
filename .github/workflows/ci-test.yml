@@ -1,4 +1,4 @@
-name: Java CI with Gradle (Multi-Services Auto Test)
+name: Java CI/CD with Gradle & Docker
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  # ================= JOB 1: BACKEND MATRIX =================
+  # ================= JOB 1: BACKEND CI/CD =================
   backend:
     runs-on: ubuntu-latest
     
@@ -28,7 +28,7 @@ jobs:
         ]
       fail-fast: false
 
-    name: Build ${{ matrix.service }}
+    name: Build & Push -> ${{ matrix.service }}
 
     steps:
     - name: Checkout source code
@@ -40,27 +40,52 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    # Chỉ khởi tạo môi trường Gradle thuần túy tại thư mục gốc của repo, tuyệt đối không trỏ linh tinh
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
 
-    # Tự động quét tìm vị trí chuẩn của file gradlew dựa theo tên service, chấp hết mọi loại trùng lặp đường dẫn
-    - name: Compile and Verify ${{ matrix.service }}
+    # --- PHẦN 1: CI - ĐỊNH VỊ VÀ BIÊN DỊCH CODE ---
+    - name: Compile Java Code
+      id: compile-step
       run: |
         TARGET_NAME=$(echo "${{ matrix.service }}" | tr '[:upper:]' '[:lower:]')
         GRADLEW_PATH=$(find . -iname "gradlew" | grep -i "$TARGET_NAME" | head -n 1)
-        
         if [ -z "$GRADLEW_PATH" ]; then
-          echo "❌ Không tìm thấy thư mục nào khớp với service: ${{ matrix.service }}"
+          echo "❌ Không tìm thấy thư mục của service: ${{ matrix.service }}"
           exit 1
         fi
         
-        # Nhảy vào đúng thư mục chứa file gradlew tìm được và chạy build
-        cd $(dirname "$GRADLEW_PATH")
+        # Lưu đường dẫn thư mục thực tế vào biến môi trường để bước sau dùng lại
+        SRC_DIR=$(dirname "$GRADLEW_PATH")
+        echo "SERVICE_DIR=$SRC_DIR" >> $GITHUB_ENV
+        
+        cd $SRC_DIR
         chmod +x ./gradlew
         ./gradlew assemble
+
+    # --- PHẦN 2: CD - TỰ ĐỘNG BUILD DOCKER IMAGE & PUSH ---
+    # 1. Đăng nhập vào Docker Hub bằng tài khoản đã giấu trong Secrets
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    # 2. Thực hiện Build Docker Image dựa vào Dockerfile có sẵn trong thư mục service
+    - name: Build and Push Docker Image
+      run: |
+        # Chuyển tên service thành chữ thường để đặt tên Image đúng chuẩn Docker (Docker không cho viết hoa tên Image)
+        IMAGE_NAME=$(echo "${{ matrix.service }}" | tr '[:upper:]' '[:lower:]')
         
-  # ================= JOB 2: FRONTEND =================
+        # Di chuyển vào đúng thư mục chứa Dockerfile của service đó để build
+        cd ${{ env.SERVICE_DIR }}
+        
+        # Tiến hành build và tag Image với tên tài khoản của bạn
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:latest .
+        
+        # Đẩy Image lên Docker Hub công khai
+        docker push ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:latest
+        
+  # ================= JOB 2: FRONTEND CI =================
   frontend-ci:
     runs-on: ubuntu-latest
     name: Build Frontend ReactJS
