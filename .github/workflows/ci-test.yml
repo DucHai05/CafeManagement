@@ -8,32 +8,27 @@ on:
 
 jobs:
   build-and-test:
+    # Máy ảo chạy CI của GitHub (mặc định là Linux để tối ưu tốc độ)
     runs-on: ubuntu-latest
 
     steps:
-    # 1. Kéo code về máy ảo GitHub
+    # 1. Kéo code từ GitHub về
     - name: Checkout source code
       uses: actions/checkout@v4
 
-    # 2. Khởi tạo môi trường Java 17
+    # 2. Cài đặt Java 17 cho máy ảo
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
 
-    # 3. Sử dụng công cụ Setup Gradle chính thức của GitHub
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v4 # Cập nhật lên v4 mới nhất để tránh warning Node.js cũ
-
-    # 4. TỰ ĐỘNG TÌM file gradlew và cấp quyền (Bất kể nó nằm ở thư mục nào)
-    - name: Find and Grant execute permission for gradlew
-      run: |
-        find . -name "gradlew" -exec chmod +x {} +
-
-    # 5. TỰ ĐỘNG CHẠY TEST trong thư mục chứa mã nguồn của service user
-    - name: Run Tests within service-user
-      run: |
-        GRADLEW_PATH=$(find . -name "gradlew" | grep "service-user" | head -n 1) # Lấy duy nhất 1 đường dẫn đề phòng trùng
-        cd $(dirname "$GRADLEW_PATH")
-        ./gradlew test -x test # <-- Cờ -x test sẽ bỏ qua bước chạy hàm test, chỉ compile code để check lỗi cú pháp
+    # 3. Tối ưu hóa và chạy Gradle bằng Action chính chủ của GitHub
+    # Action này tự động cấp quyền thực thi (chmod +x) cho file gradlew luôn, 
+    # bạn không cần gõ lệnh cấp quyền thủ công nữa.
+    with:
+      arguments: assemble
+      # Chỉ định chính xác thư mục chứa service-user tính từ gốc repo.
+      # Bạn hãy thay "cafe-service-user" bằng tên thư mục chuẩn trên Windows của bạn nhé.
+      build-root-directory: ./cafe-service-user 
+      uses: gradle/actions/setup-gradle@v4
