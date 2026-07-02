@@ -15,7 +15,7 @@ jobs:
       matrix:
         service: [
           "ServiceAPIGateway",
-          "ServiceEurekaServer",
+          "EurekaServer",
           "ServiceUser",
           "ServiceCafe",
           "ServiceProduct",
