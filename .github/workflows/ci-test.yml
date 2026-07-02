@@ -1,4 +1,4 @@
-name: Java CI with Gradle (Auto Test)
+name: Java CI with Gradle (Multi-Services Auto Test)
 
 on:
   push:
@@ -9,6 +9,27 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    
+    # Định nghĩa ma trận danh sách tất cả các service của bạn
+    strategy:
+      matrix:
+        service: [
+          "cafe-api-gateway",
+          "cafe-eureka-server",
+          "cafe-service-user",
+          "cafe-service-cafe",
+          "cafe-service-product",
+          "cafe-service-store",
+          "cafe-service-table",
+          "cafe-service-salary",
+          "cafe-service-doanh-thu",
+          "cafe-service-promotion",
+          "cafe-service-notification"
+        ]
+      # Nếu 1 service fail, các service khác vẫn tiếp tục chạy không bị dừng lại
+      fail-fast: false
+
+    name: Build ${{ matrix.service }}
 
     steps:
     # 1. Kéo code về máy ảo
@@ -22,9 +43,9 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    # 3. Chạy lệnh assemble của Gradle sử dụng Action chính chủ
-    - name: Compile and Verify Code Structure
+    # 3. Tự động nhảy vào từng thư mục dựa theo ma trận để biên dịch
+    - name: Compile and Verify ${{ matrix.service }}
       uses: gradle/actions/setup-gradle@v4
       with:
         arguments: assemble
-        build-root-directory: ./ServiceUser # <-- Đảm bảo viết đúng tên thư mục trên Windows của bạn nhé
+        build-root-directory: ./${{ matrix.service }}
