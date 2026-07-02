@@ -1,42 +1,45 @@
 name: Java CI with Gradle (Auto Test)
 
-# 1. Định nghĩa sự kiện kích hoạt luồng CI
 on:
   push:
-    branches: [ "main" ] # Kích hoạt khi có commit push lên nhánh main
+    branches: [ "main" ]
   pull_request:
-    branches: [ "main" ] # Kích hoạt khi có một Pull Request trỏ vào nhánh main
+    branches: [ "main" ]
 
 jobs:
   build-and-test:
-    # Chạy luồng CI trên hệ điều hành Ubuntu mới nhất do GitHub cấp
     runs-on: ubuntu-latest
 
     steps:
-    # Bước 1: Kéo code từ kho lưu trữ GitHub về máy ảo CI
+    # 1. Kéo code về máy ảo GitHub
     - name: Checkout source code
       uses: actions/checkout@v4
 
-    # Bước 2: Khởi tạo và cài đặt môi trường Java 17
+    # 2. Khởi tạo môi trường Java 17
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
-        distribution: 'temurin' # Sử dụng bản phân phối Eclipse Temurin ổn định
+        distribution: 'temurin'
 
-    # Bước 3: Cấu hình và tối ưu hóa bộ nhớ đệm (Cache) cho Gradle
-    # Giúp các lần chạy test sau nhanh hơn vì không phải tải lại các thư viện dependency từ đầu
+    # 3. Sử dụng công cụ Setup Gradle chính thức của GitHub
     - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v3
+      uses: gradle/actions/setup-gradle@v4 # Cập nhật lên v4 mới nhất để tránh warning Node.js cũ
 
-    # Bước 4: Cấp quyền thực thi cho file gradlew trên máy ảo Linux của GitHub
-    - name: Grant execute permission for gradlew
-      run: chmod +x ./cafe-service-user/gradlew
-      # Lưu ý: Thay đổi đường dẫn "./cafe-service-user/gradlew" nếu cấu trúc thư mục của bạn khác.
-      # Nếu file gradlew nằm ngay thư mục gốc, chỉ cần ghi: chmod +x gradlew
-
-    # Bước 5: Chạy các bài test tự động
-    - name: Run Tests with Gradle
+    # 4. TỰ ĐỘNG TÌM file gradlew và cấp quyền (Bất kể nó nằm ở thư mục nào)
+    - name: Find and Grant execute permission for gradlew
       run: |
-        cd ./cafe-service-user
+        find . -name "gradlew" -exec chmod +x {} +
+
+    # 5. TỰ ĐỘNG CHẠY TEST trong thư mục chứa mã nguồn của service user
+    - name: Run Tests within service-user
+      run: |
+        # Lệnh này sẽ tự động tìm đến đúng thư mục chứa gradlew của service-user và thực thi test
+        # Đảm bảo lệnh hoạt động ngay cả khi bạn đặt tên thư mục là cafe-service-user hay trunk-service-user...
+        GRADLEW_PATH=$(find . -name "gradlew" | grep "service-user")
+        if [ -z "$GRADLEW_PATH" ]; then
+          echo "❌ Không tìm thấy thư mục service-user nào chứa file gradlew!"
+          exit 1
+        fi
+        cd $(dirname "$GRADLEW_PATH")
         ./gradlew test
