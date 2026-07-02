@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  # ================= JOB 1: CHẠY MA TRẬN CHO BACKEND =================
+  # ================= JOB 1: BACKEND MATRIX =================
   backend:
     runs-on: ubuntu-latest
     
@@ -40,14 +40,21 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Compile and Verify ${{ matrix.service }}
+    # Bước 3: Chỉ dùng để setup môi trường Gradle (Bỏ tham số arguments lỗi đi)
+    - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
       with:
-        arguments: assemble
         build-root-directory: ./${{ matrix.service }}
 
-  # ================= JOB 2: CHẠY CHO FRONTEND REACTJS =================
-  frontend-ci: # <-- Đã căn lề thẳng hàng hoàn toàn với chữ backend ở trên
+    # Bước 4: Tách riêng lệnh thực thi assemble chạy qua gradlew
+    - name: Compile and Verify ${{ matrix.service }}
+      working-directory: ./${{ matrix.service }}
+      run: |
+        chmod +x ./gradlew
+        ./gradlew assemble
+        
+  # ================= JOB 2: FRONTEND =================
+  frontend-ci:
     runs-on: ubuntu-latest
     name: Build Frontend ReactJS
     
